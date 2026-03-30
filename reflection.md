@@ -22,8 +22,16 @@
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Three issues were caught during skeleton review before any logic was implemented:
+
+1. **`Scheduler.generate()` gained a `target_date: date` parameter.**
+   The original stub took no arguments, but `DailySchedule` requires a date. Without this parameter there was no way to produce a correctly dated schedule.
+
+2. **`DailySchedule` gained an `available_minutes: int` field.**
+   `is_overbooked()` compares total scheduled time against the owner's daily limit, but `DailySchedule` had no reference to that limit — making the method unimplementable. The `Scheduler` now passes `int(owner.available_hours_per_day * 60)` at construction time so the schedule is self-contained.
+
+3. **`scheduled_tasks` and `warnings` were given explicit types (`list[tuple[Task, time]]` and `list[str]`).**
+   The original `list` with a comment left the structure ambiguous. Typed lists make `get_total_duration()` straightforward to implement and allow static analysis to catch misuse early.
 
 ---
 
