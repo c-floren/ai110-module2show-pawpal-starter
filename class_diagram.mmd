@@ -5,6 +5,8 @@ classDiagram
         +str breed
         +int age
         +str special_needs
+        +list tasks
+        +add_task(task) None
     }
 
     class Owner {
@@ -20,13 +22,17 @@ classDiagram
         +str frequency
         +str assigned_pet
         +str notes
+        +bool completed
+        +date due_date
+        +mark_complete() None
     }
 
     class DailySchedule {
         +date date
+        +int available_minutes
         +list scheduled_tasks
         +list warnings
-        +add_task(task, start_time)
+        +add_task(task, start_time) None
         +get_total_duration() int
         +is_overbooked() bool
     }
@@ -35,13 +41,18 @@ classDiagram
         +Owner owner
         +list pets
         +list tasks
-        +generate() DailySchedule
+        +generate(target_date) DailySchedule
         +order_by_priority(tasks) list
+        +sort_by_time(scheduled_tasks) list
+        +filter_tasks(completed, pet_name) list
+        +mark_task_complete(task, on_date) Task
+        +detect_conflicts(scheduled_tasks) list
         +validate(schedule) list
     }
 
     Scheduler --> Owner : uses
-    Scheduler "1" --> "*" Pet : uses
+    Scheduler "1" --> "*" Pet : manages
     Scheduler "1" --> "*" Task : manages
     Scheduler --> DailySchedule : produces
-    DailySchedule "1" --> "*" Task : contains
+    Pet "1" --> "*" Task : has
+    DailySchedule "1" --> "*" Task : schedules

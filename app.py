@@ -97,11 +97,24 @@ with st.form("task_form"):
             st.success(f"Added task: {task_name} -> {assigned_pet}")
 
 if st.session_state.tasks:
-    st.write("**Current tasks:**")
+    st.write("**Current tasks (sorted by priority):**")
+    _temp_scheduler = Scheduler(
+        owner=st.session_state.owner or Owner("", 0),
+        pets=st.session_state.pets,
+        tasks=st.session_state.tasks,
+    )
+    _priority_label = {1: "1 — High", 2: "2", 3: "3 — Medium", 4: "4", 5: "5 — Low"}
     st.table([
-        {"Task": t.name, "Pet": t.assigned_pet, "Duration": f"{t.duration} min",
-         "Priority": t.priority, "Time": t.time_preference, "Freq": t.frequency}
-        for t in st.session_state.tasks
+        {
+            "Task": t.name,
+            "Pet": t.assigned_pet,
+            "Duration": f"{t.duration} min",
+            "Priority": _priority_label.get(t.priority, str(t.priority)),
+            "Time": t.time_preference.capitalize(),
+            "Freq": t.frequency.capitalize(),
+            "Done": "Yes" if t.completed else "No",
+        }
+        for t in _temp_scheduler.order_by_priority(st.session_state.tasks)
     ])
 else:
     st.info("No tasks added yet.")
@@ -128,25 +141,57 @@ if st.button("Generate schedule", type="primary"):
         )
         schedule = scheduler.generate(date.today())
 
-        st.success(f"Schedule for {schedule.date.strftime('%A, %B %d %Y')}")
-        st.markdown(f"**Budget:** {schedule.available_minutes} min &nbsp;|&nbsp; "
-                    f"**Scheduled:** {schedule.get_total_duration()} min &nbsp;|&nbsp; "
-                    f"**Overbooked:** {'Yes' if schedule.is_overbooked() else 'No'}")
+        st.success(f"Schedule generated for {schedule.date.strftime('%A, %B %d %Y')}")
 
-        st.markdown("#### Today's Plan (sorted by time)")
+        col_b, col_s, col_o = st.columns(3)
+        col_b.metric("Budget", f"{schedule.available_minutes} min")
+        col_s.metric("Scheduled", f"{schedule.get_total_duration()} min")
+        if schedule.is_overbooked():
+            col_o.error("Overbooked!")
+        else:
+            col_o.success("On track")
+
+        st.markdown("#### Today's Plan")
         sorted_tasks = scheduler.sort_by_time(schedule.scheduled_tasks)
-        for task, start in sorted_tasks:
-            end_min = start.hour * 60 + start.minute + task.duration
-            end_str = f"{end_min // 60:02d}:{end_min % 60:02d}"
-            st.markdown(
-                f"- **{start.strftime('%I:%M %p')} → {end_str}** &nbsp; "
-                f"[P{task.priority}] {task.name} *({task.assigned_pet})*"
-            )
+        _priority_label = {1: "High", 2: "Med-High", 3: "Medium", 4: "Med-Low", 5: "Low"}
+        if sorted_tasks:
+            st.table([
+                {
+                    "Start": start.strftime("%I:%M %p"),
+                    "End": f"{(start.hour * 60 + start.minute + task.duration) // 60:02d}:"
+                           f"{(start.hour * 60 + start.minute + task.duration) % 60:02d}",
+                    "Task": task.name,
+                    "Pet": task.assigned_pet,
+                    "Priority": _priority_label.get(task.priority, str(task.priority)),
+                    "Duration": f"{task.duration} min",
+                    "Time Pref": task.time_preference.capitalize(),
+                }
+                for task, start in sorted_tasks
+            ])
 
-        if schedule.warnings:
-            st.markdown("#### Warnings")
-            for w in schedule.warnings:
+        # Separate conflict warnings from skip/overbook warnings
+        conflicts = scheduler.detect_conflicts(schedule.scheduled_tasks)
+        skipped   = [w for w in schedule.warnings if "skipped" in w.lower()]
+        other_w   = [w for w in schedule.warnings
+                     if w not in conflicts and "skipped" not in w.lower()]
+
+        if conflicts:
+            st.markdown("#### Scheduling Conflicts")
+            for w in conflicts:
                 st.warning(w)
+
+        if skipped:
+            st.markdown("#### Skipped Tasks")
+            for w in skipped:
+                st.warning(w)
+
+        if other_w:
+            st.markdown("#### Other Warnings")
+            for w in other_w:
+                st.warning(w)
+
+        if not schedule.warnings and not conflicts:
+            st.success("No conflicts or warnings — great schedule!")
 
 # -----------------------------------------------------------------------
 # SECTION 5: Filter tasks
@@ -184,13 +229,16 @@ else:
         results = scheduler.filter_tasks(completed=completed_arg, pet_name=pet_arg)
 
         if results:
+            _priority_label = {1: "1 — High", 2: "2", 3: "3 — Medium", 4: "4", 5: "5 — Low"}
+            st.success(f"{len(results)} task(s) found")
             st.table([
                 {
                     "Task": t.name,
                     "Pet": t.assigned_pet,
                     "Duration": f"{t.duration} min",
-                    "Priority": t.priority,
-                    "Time": t.time_preference,
+                    "Priority": _priority_label.get(t.priority, str(t.priority)),
+                    "Time": t.time_preference.capitalize(),
+                    "Freq": t.frequency.capitalize(),
                     "Done": "Yes" if t.completed else "No",
                 }
                 for t in results
