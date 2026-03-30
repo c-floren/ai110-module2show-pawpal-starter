@@ -19,6 +19,7 @@ class Pet:
     tasks: list = field(default_factory=list)
 
     def add_task(self, task) -> None:
+        """Append a Task to this pet's task list."""
         self.tasks.append(task)
 
 
@@ -40,6 +41,7 @@ class Task:
     completed: bool = False
 
     def mark_complete(self) -> None:
+        """Mark this task as completed."""
         self.completed = True
 
 
@@ -51,6 +53,7 @@ class DailySchedule:
     warnings: list[str] = field(default_factory=list)
 
     def add_task(self, task: Task, start_time: time) -> None:
+        """Append a (Task, start_time) tuple to the scheduled task list."""
         self.scheduled_tasks.append((task, start_time))
 
     def get_total_duration(self) -> int:
