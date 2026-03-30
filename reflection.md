@@ -44,8 +44,11 @@ Three issues were caught during skeleton review before any logic was implemented
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The scheduler uses a **greedy, first-fit strategy**: it sorts all tasks once by priority and time preference, then walks the list in order, placing each task immediately after the previous one. If a task doesn't fit in the remaining time budget it is skipped and a warning is issued — the scheduler never goes back to try a different arrangement.
+
+**What this gives up:** a greedy first-fit pass cannot find the globally optimal schedule. For example, if a 40-minute grooming task (priority 3) is placed and leaves only 5 minutes, a 10-minute feeding task (priority 1) that arrives later will be skipped — even though dropping the grooming task would have left enough room for several higher-value tasks. A backtracking or dynamic-programming approach could find that better arrangement.
+
+**Why it is reasonable here:** for a single pet owner with a small number of daily tasks (typically under 20), the greedy approach produces a schedule in O(n log n) time with no risk of hanging or crashing on edge cases. The priority sort already ensures the most important tasks land first, which aligns with what a pet owner actually needs — missing a low-priority grooming session is far less harmful than missing a feeding or medication. The skipped-task warnings make the limitation visible rather than hiding it, so the owner can manually adjust if needed.
 
 ---
 
