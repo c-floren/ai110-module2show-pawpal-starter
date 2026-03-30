@@ -6,6 +6,19 @@
 
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
+- Classes:
+    - **Pet**: Data holder for pet profile information
+        - Attributes: name, species, breed, age, special_needs
+    - **Owner**: Data holder for owner constraints
+        - Attributes: name, available_hours_per_day
+    - **Task**: A single care task with scheduling metadata
+        - Attributes: name, duration, priority, time_preference, frequency, assigned_pet, notes
+    - **DailySchedule**: The output of one scheduling run
+        - Attributes: date, scheduled_tasks (list of (Task, start_time)), warnings
+        - Methods: add_task(task, start_time), get_total_duration(), is_overbooked()
+    - **Scheduler**: Core scheduling logic
+        - Attributes: owner, pets (list), tasks
+        - Methods: generate(), order_by_priority(tasks), validate(schedule)
 
 **b. Design changes**
 
