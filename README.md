@@ -40,6 +40,32 @@ Checks every pair of scheduled tasks for overlapping time windows using the stan
 
 ---
 
+## Testing PawPal+
+
+### Running the tests
+
+```bash
+python -m pytest tests/test_pawpal.py -v
+```
+
+### What the tests cover
+
+| Test | What it verifies |
+|---|---|
+| `test_mark_complete_changes_status` | `Task.mark_complete()` flips `completed` from `False` to `True` |
+| `test_add_task_increases_pet_task_count` | `Pet.add_task()` appends to the pet's task list correctly |
+| `test_sort_by_time_returns_chronological_order` | `Scheduler.sort_by_time()` reorders tasks from earliest to latest start time |
+| `test_mark_task_complete_daily_creates_next_day_task` | Completing a daily task spawns a new task due the following day, with `completed=False` |
+| `test_detect_conflicts_flags_duplicate_start_times` | Two tasks at the same start time produce exactly one conflict warning naming both tasks |
+
+### Confidence Level
+
+**3 / 5 stars**
+
+The core behaviors — task completion, recurrence, sorting, and conflict detection — are tested and passing. The confidence ceiling is here because several important edge cases are not yet covered by automated tests: tasks that overflow midnight, completing an already-completed recurring task (which currently spawns a duplicate), zero-duration tasks in conflict detection, and the `generate()` overbooking boundary condition. The logic works correctly for the normal paths demonstrated in `main.py`, but reliability under unusual inputs is unverified.
+
+---
+
 ## Getting started
 
 ### Setup
