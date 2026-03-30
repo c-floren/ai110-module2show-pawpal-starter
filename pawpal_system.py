@@ -16,6 +16,10 @@ class Pet:
     breed: str
     age: int
     special_needs: str = ""
+    tasks: list = field(default_factory=list)
+
+    def add_task(self, task) -> None:
+        self.tasks.append(task)
 
 
 @dataclass
@@ -33,6 +37,10 @@ class Task:
     frequency: str          # "daily", "weekly", "once"
     assigned_pet: str       # pet name
     notes: str = ""
+    completed: bool = False
+
+    def mark_complete(self) -> None:
+        self.completed = True
 
 
 @dataclass
